@@ -1,16 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[29]:
-
 
 import pickle
 import numpy as np
 import random
 import argparse
-
-
-# In[1048]:
 
 
 class Generate:
@@ -44,8 +36,6 @@ class Generate:
         
         return fit_model
 
-
-# In[1076]:
 
 
 parser = argparse.ArgumentParser()
