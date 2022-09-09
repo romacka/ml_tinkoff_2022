@@ -1,52 +1,65 @@
-
-import pickle
+import string
+import re
+import sys
 import numpy as np
-import random
+import pickle
 import argparse
 
 
-class Generate:
+class Train:
 
-    def __init__(self, length):
-        self.length = length
-        
-        
-    def sentence(self, model):
-    
-        first_word = random.choice(list(model))
-        sentence = [first_word]
-        for i in range(self.length - 1):
-            temp_val = fit_model[first_word]
-            temp_prob = []
-            for i in range(len(temp_val)):
-                temp_prob.append(temp_val[i][1])
-            while len(temp_val) > 2:
-                temp_val.pop(temp_prob.index(min(temp_prob)))
-                temp_prob.pop(temp_prob.index(min(temp_prob)))
-            first_word = random.choice(list(temp_val))[0]
-            sentence.append(first_word)
-        
-        
-        return ' '.join(sentence).capitalize() 
-    
-    
-    def load(self, model):
-        with open(model, 'rb') as f:
-            fit_model = pickle.load(f)
-        
-        return fit_model
+    def __init__(self, data):
+        self.data = data
 
+    def norma(self):
+        self.data = "".join(c for c in self.data if ((c.isalpha()) | (c == " ")))
+        self.data = self.data.lower()
+        self.data.replace('', '')
+        words = self.data.split(' ')
+        for word in words:
+            if word == '':
+                words.remove(word)
+        return words
+
+    def fit(self, data):
+        matr = np.zeros((len(set(data)), len(set(data))))
+        unique = list(set(data))
+        for i in range(len(data)):
+            for j in range(len(data) - 2):
+                if data[i] == data[j]:
+                    matr[unique.index(data[i])][unique.index(data[j + 1])] = matr[unique.index(data[i])][
+                                                                                 unique.index(data[j + 1])] + 1
+        model = {}
+        for l in range(len(unique) - 1):
+            pair_emb_count = 0
+            pair_context_count = 0
+            last_context = []
+            for m in range(len(unique) - 1):
+                if matr[l][m] != 0:
+                    pair_emb_count = pair_emb_count + matr[l][m]
+            for n in range(len(unique) - 1):
+                if matr[l][n] != 0:
+                    for k in range(len(unique) - 1):
+                        if matr[k][n] != 0:
+                            pair_context_count = pair_context_count + matr[k][n]
+                    prob = matr[l][n] * matr[l][n] / pair_emb_count / pair_context_count
+                    last_context.append((unique[n], prob))
+                    model[unique[l]] = last_context
+        return model
+
+    def generate(self, model, output):
+        with open(output, 'wb') as f:
+            pickle.dump(model, f)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--length', type=int, help='Input dir for videos')
+parser.add_argument('--input-dir', dest='input_dir', type=str)
 parser.add_argument('--model', type=str, help='Output dir for image')
 args = parser.parse_args()
-
-model = args.model
-generator = Generate(args.length)
-fit_model = generator.load(model)
-
-sentence = generator.sentence(fit_model)
-print(sentence)
+f = open(args.input_dir, 'r')
+data = f.read()
+model = Train(data=data)
+norm_text = model.norma()
+fit_model = model.fit(norm_text)
+model.generate(fit_model, args.model)
 
