@@ -24,7 +24,6 @@ class Train:
             act_word, = np.where(data == u)
             next_word = np.array([data[a + 1] for a in act_word if a != len(data) - 1])
             unique_cont, counts = np.unique(next_word, return_counts=True)
-
             for val, coun in zip(unique_cont, counts):
                 model[u].append([val, coun / np.sum(counts)])
         return model
