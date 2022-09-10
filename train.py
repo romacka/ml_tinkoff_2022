@@ -1,6 +1,4 @@
 import string
-import re
-import sys
 import numpy as np
 import pickle
 import argparse
@@ -12,49 +10,34 @@ class Train:
         self.data = data
 
     def norma(self):
-        self.data = "".join(c for c in self.data if ((c.isalpha()) | (c == " ")))
-        self.data = self.data.lower()
-        self.data.replace('', '')
-        words = self.data.split(' ')
-        for word in words:
-            if word == '':
-                words.remove(word)
+        words = "".join(c for c in self.data if (c.isalpha() | (c == ' ')))
+        words = np.array([w.translate(str.maketrans('', '', string.punctuation)).replace('\n', '') for w in
+                          words.lower().split(' ')])
         return words
 
     def fit(self, data):
-        matr = np.zeros((len(set(data)), len(set(data))))
-        unique = list(set(data))
-        for i in range(len(data)):
-            for j in range(len(data) - 2):
-                if data[i] == data[j]:
-                    matr[unique.index(data[i])][unique.index(data[j + 1])] = matr[unique.index(data[i])][
-                                                                                 unique.index(data[j + 1])] + 1
         model = {}
-        for l in range(len(unique) - 1):
-            pair_emb_count = 0
-            pair_context_count = 0
-            last_context = []
-            for m in range(len(unique) - 1):
-                if matr[l][m] != 0:
-                    pair_emb_count = pair_emb_count + matr[l][m]
-            for n in range(len(unique) - 1):
-                if matr[l][n] != 0:
-                    for k in range(len(unique) - 1):
-                        if matr[k][n] != 0:
-                            pair_context_count = pair_context_count + matr[k][n]
-                    prob = matr[l][n] * matr[l][n] / pair_emb_count / pair_context_count
-                    last_context.append((unique[n], prob))
-                    model[unique[l]] = last_context
+        unique = np.unique(data)
+        for u in unique:
+            model[u] = []
+        for u in unique:
+            act_word, = np.where(data == u)
+            next_word = np.array([data[a + 1] for a in act_word if a != len(data) - 1])
+            unique_cont, counts = np.unique(next_word, return_counts=True)
+
+            for val, coun in zip(unique_cont, counts):
+                model[u].append([val, coun / np.sum(counts)])
         return model
 
-    def generate(self, model, output):
-        with open(output, 'wb') as f:
+    def generate(self, model, url):
+        with open(url, 'wb') as f:
             pickle.dump(model, f)
 
-
+        
 parser = argparse.ArgumentParser()
-parser.add_argument('--input-dir', dest='input_dir', type=str)
-parser.add_argument('--model', type=str, help='Output dir for image')
+parser.add_argument('--input-dir', dest='input_dir',
+type = str)
+parser.add_argument('--model', type=str)
 args = parser.parse_args()
 f = open(args.input_dir, 'r')
 data = f.read()
@@ -62,4 +45,3 @@ model = Train(data=data)
 norm_text = model.norma()
 fit_model = model.fit(norm_text)
 model.generate(fit_model, args.model)
-
