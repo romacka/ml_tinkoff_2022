@@ -43,9 +43,17 @@ parser.add_argument('--input-dir', dest='input_dir',
 type = str)
 parser.add_argument('--model', type=str)
 args = parser.parse_args()
-#открытие файла с датасетом
-f = open(args.input_dir, 'r')
-data = f.read().replace('\n', ' ')
+input_dir = args.input_dir
+#ввод текста с клавиатуры
+if input_dir == None:
+    data = input('Введите текст, на основе которого будет проходить обучение:').replace('\n', ' ')
+    #проверка(word count > 1)
+    while len(data.split(' ')) == 1:
+        data = input('Введите больше одного слова').replace('\n', ' ')
+else:    
+    #открытие файла с датасетом
+    f = open(input_dir, 'r')
+    data = f.read().replace('\n', ' ')
 #создание объекта класса Train
 model = Train(data=data)
 #нормализация текста, обучение модели и сохранение файла
