@@ -11,7 +11,7 @@ class Train:
 
     def norma(self):
         #очистка текста
-        words = "".join(c.lower() for c in self.data if (c.isalpha() | (c == ' '))).split(' ')
+        words = np.array("".join(c.lower() for c in self.data if (c.isalpha() | (c == ' '))).split(' '))
         return words
 
     def fit(self, data):
